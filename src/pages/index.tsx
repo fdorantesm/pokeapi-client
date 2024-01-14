@@ -29,21 +29,28 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 
+const initialState = {
+  page: 1,
+  limit: 12,
+  total: 0,
+  pages: 0,
+  prevPage: null,
+  nextPage: null,
+  docs: [],
+  hasMore: false,
+  offset: 0,
+};
+
 export default function Home() {
   const config = useConfig();
-  const [pokemons, setPokemons] = useState<Pokemon[]>([]);
-  const [hasMore, setHasMore] = useState(true);
-  const [search, setSearch] = useState("");
   const [typing, setTyping] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [context, setContext] = useState<Omit<Pagination<Pokemon>, "docs">>({
+  const [filter, setFilter] = useState<PokemonsFilter>({
     limit: 12,
     page: 1,
-    total: 0,
-    pages: 0,
-    prevPage: null,
-    nextPage: null,
+    search: "",
   });
+  const [context, setContext] = useState<Pagination<Pokemon>>(initialState);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const debouncedSearch = useCallback(
@@ -58,42 +65,48 @@ export default function Home() {
 
     setLoading(false);
 
-    const hasMore = response.nextPage !== null;
-    setHasMore(hasMore);
-
-    setContext({
+    setContext((prev) => ({
       page: response.page,
       limit: response.limit,
       total: response.total,
       pages: response.pages,
       prevPage: response.prevPage,
       nextPage: response.nextPage,
-    });
-
-    setPokemons((prev) => [...prev, ...response.docs]);
+      docs: [...prev.docs, ...response.docs],
+      hasMore: response.hasMore,
+      offset: response.offset,
+    }));
   };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setTyping(true);
-    setPokemons([]);
-    setContext((prev) => ({ ...prev, page: 1 }));
-    setSearch(event.target.value);
+    setContext((prev) => ({ ...prev, ...initialState }));
+    setFilter((prev) => ({
+      ...prev,
+      ...filter,
+      search: event.target.value,
+      page: 1,
+    }));
   };
 
   useEffect(() => {
     debouncedSearch({
-      limit: context.limit,
-      page: context.page,
-      search,
+      limit: filter.limit,
+      page: filter.page,
+      search: filter.search,
     });
-  }, [context.limit, context.page, debouncedSearch, search]);
+  }, [
+    context.limit,
+    debouncedSearch,
+    filter.limit,
+    filter.page,
+    filter.search,
+  ]);
 
   const handleScroll = async () => {
-    await fetchPokemons({
-      limit: context.limit,
-      page: context.page + 1,
-      search,
-    });
+    if (context.nextPage) {
+      setFilter((prev) => ({ ...prev, page: context.page + 1 }));
+    }
   };
 
   return (
@@ -111,22 +124,27 @@ export default function Home() {
               <TextField
                 fullWidth
                 placeholder="Buscar pokemon"
-                value={search}
+                value={filter.search}
                 onChange={handleSearch}
               />
             </FormControl>
           </Box>
+          {loading && !typing && (
+            <Box p={1}>
+              <LinearProgress />
+            </Box>
+          )}
           <InfiniteScroll
-            dataLength={pokemons.length}
+            dataLength={context.docs.length}
             next={handleScroll}
-            hasMore={hasMore}
+            hasMore={context.hasMore}
             loader={
               <Box sx={{ width: "100%" }} py={3}>
                 <LinearProgress />
               </Box>
             }
             endMessage={
-              pokemons.length > 0 && (
+              context.docs.length > 0 && (
                 <Stack
                   direction={"row"}
                   spacing={2}
@@ -144,7 +162,7 @@ export default function Home() {
             style={{ width: "100%" }}
           >
             <Grid container>
-              {pokemons.length === 0 && !loading && !typing && (
+              {context.docs.length === 0 && !loading && !typing && (
                 <Box p={1} sx={{ width: "100%" }}>
                   <Alert
                     variant="filled"
@@ -156,7 +174,7 @@ export default function Home() {
                   </Alert>
                 </Box>
               )}
-              {pokemons.map((pokemon) => (
+              {context.docs.map((pokemon) => (
                 <Grid item xs={12} sm={6} md={4} key={pokemon.uuid} p={1}>
                   <Card>
                     <CardContent>

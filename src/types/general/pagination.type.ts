@@ -7,4 +7,5 @@ export type Pagination<T> = {
   pages: number;
   prevPage?: number | null;
   nextPage?: number | null;
+  hasMore: boolean;
 };

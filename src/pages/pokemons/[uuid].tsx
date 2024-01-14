@@ -25,7 +25,7 @@ import Image from "next/image";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 
-export default function PokemonDetail(props: Props) {
+export default function PokemonDetail() {
   const config = useConfig();
   const router = useRouter();
   const [pokemon, setPokemon] = useState<Pokemon | undefined>(undefined);
@@ -143,5 +143,3 @@ export default function PokemonDetail(props: Props) {
     </Layout>
   );
 }
-
-interface Props {}
