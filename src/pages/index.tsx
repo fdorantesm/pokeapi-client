@@ -200,9 +200,7 @@ export default function Home() {
                         justifyContent={"end"}
                         sx={{ width: "100%" }}
                       >
-                        <Link
-                          href={`${config.siteUrl}/pokemons/${pokemon.uuid}/`}
-                        >
+                        <Link href={`/pokemons/${pokemon.uuid}/`}>
                           <Tooltip title="Ver detalle" placement="top">
                             <IconButton>
                               <Visibility />
