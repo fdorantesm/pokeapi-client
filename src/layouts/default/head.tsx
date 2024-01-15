@@ -29,7 +29,6 @@ export function Head(props: Props) {
         <meta name="robots" content="index, follow" />
         <meta name="googlebot" content="index, follow" />
         <meta name="twitter:description" content={props.description} />
-        <link rel="canonical" href={config.siteUrl} />
         {props.children}
       </NextHead>
     </>
